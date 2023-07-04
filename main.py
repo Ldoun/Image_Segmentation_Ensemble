@@ -13,7 +13,7 @@ from config import get_args
 from trainer import Trainer
 import models as model_module
 from utils import seed_everything
-from data import AudioDataSet, load_image
+from data import ImageDataSet, load_image
 from auto_batch_size import max_gpu_batch_size
 
 if __name__ == "__main__":
@@ -39,19 +39,16 @@ if __name__ == "__main__":
     test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
     #fix path based on the data dir
 
-    extractor = model_module.AutoFeatureExtractor.from_pretrained(args.pretrained_model)
-    #extract feature information using pretrained model's feature exractor
-    extractor = partial(extractor, sampling_rate=args.sr, return_tensors='np') #for Compatibility: var name-> scaler, return_tensors -> np
-    #using partial to fix argument of the function
-    scaler = lambda x: extractor(x).input_values.squeeze(0)
-    input_size = None
-    
-    output_size = 6
+    processor = model_module.AutoImageProcessor.from_pretrained(args.pretrained_model)#, reduce_labels=True) #reduce_label remove background class
+    #process image using pretrained model's AutoImageProcessor
+    processor = partial(processor, return_tensors='pt') 
 
-    test_result = np.zeros([len(test_data), output_size])
+    input_size = (224, 224)
+
+    test_result = np.zeros([len(test_data), input_size[0]*input_size[1]])
     skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
     prediction = pd.read_csv(args.submission)
-    output_index = [f'{i}' for i in range(0, output_size)]
+    output_index = [f'{i}' for i in range(0, input_size[0]*input_size[1])]
     stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data))) #dataframe for saving OOF predictions
 
     if args.continue_train > 0:
@@ -74,20 +71,16 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = AudioDataSet(file_list=kfold_train_data['path'], y=kfold_train_data['label'])
-        valid_dataset = AudioDataSet(file_list=kfold_valid_data['path'], y=kfold_valid_data['label'])
-        if scaler is None: #if model does not belong to HuggingFace -> use min-max scaler to scale data
-            scaler = lambda x:(x-train_dataset.min)/(train_dataset.max-train_dataset.min)
-        train_dataset.scaler = scaler
-        valid_dataset.scaler = scaler
+        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], mask=kfold_train_data['mask_rle'], y=kfold_train_data['label']) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], mask=kfold_valid_data['mask_rle'], y=kfold_valid_data['label'])
 
-        model = getattr(model_module , args.model)(args, input_size, output_size).to(device) #make model based on the model name and args
-        loss_fn = nn.CrossEntropyLoss()
+        model = getattr(model_module , args.model)(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
+        loss_fn = nn.BCELoss() # currently not in use
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
             args.batch_size = max_gpu_batch_size(device, load_image, logger, model, loss_fn, train_dataset.max_length_file)
-            model = getattr(model_module , args.model)(args, input_size, output_size).to(device)
+            model = getattr(model_module , args.model)(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device)
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         train_loader = DataLoader(
@@ -97,20 +90,20 @@ if __name__ == "__main__":
             valid_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         )
 
-        trainer = Trainer(train_loader, valid_loader, model, loss_fn, optimizer, device, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
+        trainer = Trainer(
+            train_loader, valid_loader, model, loss_fn, optimizer, device, processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
         trainer.train() #start training
 
-        test_dataset = AudioDataSet(file_list=test_data['path'], y=None)
-        test_dataset.scaler = scaler
+        test_dataset = ImageDataSet(file_list=test_data['path'], mask=None, y=None)
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        test_result += trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
+        test_result += trainer.test(test_loader).flatten() #softmax applied output; accumulate test prediction of current fold model
         prediction[output_index] = test_result
         prediction.to_csv(os.path.join(result_path, 'sum.csv'), index=False) 
         
-        stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
+        stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader).flatten() #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
         stackking_input.to_csv(os.path.join(result_path, f'for_stacking_input.csv'), index=False)
 
-prediction['label'] = np.argmax(test_result, axis=-1) #use the most likely results as my final prediction
+prediction['mask_rle'] = np.array(test_result > 0.5) #use the most likely results as my final prediction
 prediction.drop(columns=output_index).to_csv(os.path.join(result_path, 'prediction.csv'), index=False)

@@ -4,14 +4,17 @@ import torch
 import numpy as np
 from tqdm import tqdm
 
+from utils import dice_score
+
 class Trainer():
-    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, device, patience, epochs, result_path, fold_logger, len_train, len_valid):
+    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, device, processor, patience, epochs, result_path, fold_logger, len_train, len_valid):
         self.train_loader = train_loader
         self.valid_loader = valid_loader
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
         self.device = device
+        self.processor = processor
         self.patience = patience
         self.epochs = epochs
         self.logger = fold_logger
@@ -44,17 +47,18 @@ class Trainer():
         total_loss = 0
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
-            x,y = batch
+            x, mask, y = batch
+            x, mask = self.processor(x, mask)
             x, y = x.to(self.device), y.to(self.device)
             
             self.optimizer.zero_grad()
             output = self.model(x)
             
-            loss = self.loss_fn(output, y)
+            loss = output.loss#self.loss_fn(output, y)
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
-            correct += sum(output.argmax(dim=1) == y).item()
+            correct += dice_score(output.logit.numpy(), mask.numpy())
         
         return total_loss/self.len_train, correct/self.len_train
     
@@ -64,13 +68,14 @@ class Trainer():
             total_loss = 0
             correct = 0
             for batch in self.valid_loader:
-                x, y = batch
+                x, mask, y = batch
+                x = self.processor(images=x)
                 x, y = x.to(self.device), y.to(self.device)
                 output = self.model(x)
                 
                 loss = self.loss_fn(output, y)
-                total_loss += loss.item() * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
-                correct += sum(output.argmax(dim=1) == y).item()
+                total_loss += loss.item() # * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
+                correct += dice_score(output.logit.numpy(), mask.numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
@@ -81,8 +86,9 @@ class Trainer():
         with torch.no_grad():
             result = []
             for batch in test_loader:
-                x, y = batch
-                x, y = x.to(self.device), y.to(self.device)
+                x, mask, y = batch
+                x = self.processor(images=x)
+                x, = x.to(self.device)
                 output = torch.softmax(self.model(x), dim=1) #use softmax func to describe the probability
 
                 result.append(output)
