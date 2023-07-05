@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import pandas as pd
 from functools import partial
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, KFold
 
 import torch
 from torch import optim, nn
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     input_size = (224, 224)
 
     test_result = np.zeros([len(test_data), input_size[0]*input_size[1]])
-    skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
+    skf = KFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
     prediction = pd.read_csv(args.submission)
     output_index = [f'{i}' for i in range(0, input_size[0]*input_size[1])]
     stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data))) #dataframe for saving OOF predictions
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         test_result = prediction[output_index].values
         stackking_input = pd.read_csv(os.path.join(result_path, f'for_stacking_input.csv'))
     
-    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['path'], train_data['label'])): #by skf every fold will have similar label distribution
+    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['img_path'])): #by skf every fold will have similar label distribution
         if args.continue_train > fold+1:
             logger.info(f'skipping {fold+1}-fold')
             continue
