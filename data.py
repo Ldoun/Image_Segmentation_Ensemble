@@ -32,11 +32,11 @@ train_transform = A.Compose([
     # A.LongestMaxSize(max_size=1333),
     # A.RandomCrop(width=512, height=512),
     # A.HorizontalFlip(p=0.5),
-    A.Resize(width=224, height=224),
+    A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
 ])
 
 valid_transform = A.Compose([
-    A.Resize(width=224, height=224),
+    A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
 ])
 
 class ImageDataSet(Dataset):
