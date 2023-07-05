@@ -48,11 +48,11 @@ class Trainer():
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
             x, mask, y = batch
-            x, mask = self.processor(x, mask)
+            x = self.processor(x, mask)
             x, y = x.to(self.device), y.to(self.device)
             
             self.optimizer.zero_grad()
-            output = self.model(x)
+            output = self.model(pixel_values=x, mask_labels=mask)
             
             loss = output.loss#self.loss_fn(output, y)
             loss.backward()
@@ -69,9 +69,9 @@ class Trainer():
             correct = 0
             for batch in self.valid_loader:
                 x, mask, y = batch
-                x = self.processor(images=x)
+                x = self.processor(x, mask)
                 x, y = x.to(self.device), y.to(self.device)
-                output = self.model(x)
+                output = self.model(pixel_values=x, mask_labels=mask)
                 
                 loss = self.loss_fn(output, y)
                 total_loss += loss.item() # * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
@@ -87,7 +87,7 @@ class Trainer():
             result = []
             for batch in test_loader:
                 x, mask, y = batch
-                x = self.processor(images=x)
+                x = self.processor(x)
                 x, = x.to(self.device)
                 output = torch.softmax(self.model(x), dim=1) #use softmax func to describe the probability
 

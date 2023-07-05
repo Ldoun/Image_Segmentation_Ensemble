@@ -53,5 +53,5 @@ class ImageDataSet(Dataset):
         return len(self.features)
     
     def __getitem__(self, index):
-        transformed = self.transform(image=self.features[index], mask=self.mask)
+        transformed = self.transform(image=self.features[index], mask=self.mask[index])
         return transformed['image'], transformed['mask'], transformed['mask'].any()
