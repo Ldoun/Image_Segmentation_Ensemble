@@ -2,7 +2,7 @@ import torch.nn as nn
 from transformers import AutoModelForImageSegmentation, AutoModelForInstanceSegmentation, AutoModelForSemanticSegmentation, AutoModelForUniversalSegmentation, AutoImageProcessor
 
 class HuggingFace(nn.Module):
-    def __init__(self, args, input_size, output_size):
+    def __init__(self, args, id2label, label2id):
         super().__init__()
 
         if args.model_type == 'image':
@@ -17,4 +17,4 @@ class HuggingFace(nn.Module):
             raise 'model unknown'
 
     def forward(self, x):
-        return self.model(x).logits #call .logtis for Compatibility
+        return self.model(x)

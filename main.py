@@ -13,7 +13,7 @@ from config import get_args
 from trainer import Trainer
 import models as model_module
 from utils import seed_everything
-from data import ImageDataSet, load_image
+from data import ImageDataSet, load_image, train_transform, valid_transform
 from auto_batch_size import max_gpu_batch_size
 
 if __name__ == "__main__":
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
     #fix path based on the data dir
 
-    processor = model_module.AutoImageProcessor.from_pretrained(args.pretrained_model)#, reduce_labels=True) #reduce_label remove background class
+    processor = model_module.AutoImageProcessor.from_pretrained(args.pretrained_model, do_resize=False, do_rescale=False)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
     #process image using pretrained model's AutoImageProcessor
     processor = partial(processor, return_tensors='pt') 
 
@@ -71,8 +71,8 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], mask=kfold_train_data['mask_rle'], y=kfold_train_data['label']) #label -> True if the image contains Building 
-        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], mask=kfold_valid_data['mask_rle'], y=kfold_valid_data['label'])
+        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], transform=train_transform, mask=kfold_train_data['mask_rle'], y=kfold_train_data['label']) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], transform=valid_transform, mask=kfold_valid_data['mask_rle'], y=kfold_valid_data['label'])
 
         model = getattr(model_module , args.model)(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = nn.BCELoss() # currently not in use

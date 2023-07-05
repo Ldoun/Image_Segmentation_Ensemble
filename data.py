@@ -1,6 +1,7 @@
 import librosa
 import numpy as np
 from PIL import Image
+import albumentations as A
 
 import torch
 from torch.utils.data import  Dataset
@@ -27,8 +28,19 @@ def rle_decode(mask_rle, shape):
         img[lo:hi] = 1
     return img.reshape(shape)
 
+train_transform = A.Compose([
+    # A.LongestMaxSize(max_size=1333),
+    # A.RandomCrop(width=512, height=512),
+    # A.HorizontalFlip(p=0.5),
+    A.Resize(width=224, height=224),
+])
+
+valid_transform = A.Compose([
+    A.Resize(width=224, height=224),
+])
+
 class ImageDataSet(Dataset):
-    def __init__(self, file_list, y=None):
+    def __init__(self, file_list, transform=None, mask=None, y=None):
         self.features = [load_image(file) for file in file_list]
         self.max_length_file = file_list.iloc[0] #need to resize this to 224 or maybe not
         #rle_decode함수 추가 필요
