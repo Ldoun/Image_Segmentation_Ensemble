@@ -40,14 +40,10 @@ valid_transform = A.Compose([
 ])
 
 class ImageDataSet(Dataset):
-    def __init__(self, file_list, transform=None, mask=None, y=None):
+    def __init__(self, file_list, transform=None, mask=None):
         self.features = [load_image(file) for file in file_list]
         self.max_length_file = file_list.iloc[0] #need to resize this to 224 or maybe not
         self.transform = transform
-        
-        self.y = None
-        if y is not None:
-            self.y = torch.tensor(y.values, dtype=torch.long)
         
         self.mask = None
         if mask is not None:
