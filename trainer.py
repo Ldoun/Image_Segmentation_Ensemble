@@ -52,7 +52,7 @@ class Trainer():
             x, y = x.to(self.device), y.to(self.device)
             
             self.optimizer.zero_grad()
-            output = self.model(pixel_values=x, mask_labels=mask)
+            output = self.model(pixel_values=x, labels=mask)
             
             loss = output.loss#self.loss_fn(output, y)
             loss.backward()
@@ -71,7 +71,7 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x, mask)
                 x, y = x.to(self.device), y.to(self.device)
-                output = self.model(pixel_values=x, mask_labels=mask)
+                output = self.model(pixel_values=x, labels=mask)
                 
                 loss = self.loss_fn(output, y)
                 total_loss += loss.item() # * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
@@ -89,7 +89,7 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x)
                 x, = x.to(self.device)
-                output = torch.softmax(self.model(x), dim=1) #use softmax func to describe the probability
+                output = torch.softmax(self.model(pixel_values=x), dim=1) #use softmax func to describe the probability
 
                 result.append(output)
 
