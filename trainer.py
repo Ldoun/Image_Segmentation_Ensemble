@@ -48,7 +48,7 @@ class Trainer():
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
             x, mask, y = batch
-            x = self.processor(x, mask)
+            x = self.processor(x, segmentation_maps=mask)
             x, y = x.to(self.device), y.to(self.device)
             
             self.optimizer.zero_grad()
@@ -69,7 +69,7 @@ class Trainer():
             correct = 0
             for batch in self.valid_loader:
                 x, mask, y = batch
-                x = self.processor(x, mask)
+                x = self.processor(x, segmentation_maps=mask)
                 x, y = x.to(self.device), y.to(self.device)
                 output = self.model(pixel_values=x, labels=mask)
                 
