@@ -1,23 +1,15 @@
 import argparse
-from models import args_for_rnn, args_for_transformer, args_for_HuggingFace
+from models import args_for_HuggingFace
 
 def args_for_data(parser):
-    parser.add_argument('--sr', type=int, default=16000, help='sampling rate')
     parser.add_argument('--train', type=str, default='../data/train.csv')
     parser.add_argument('--test', type=str, default='../data/test.csv')
     parser.add_argument('--submission', type=str, default='../data/sample_submission.csv')
     parser.add_argument('--path', type=str, default='../data')
     parser.add_argument('--result_path', type=str, default='./result')
     
-def args_for_audio(parser):
-    #mel-spectrogram
-    parser.add_argument('--n_fft', type=int, default=2048, help='length of the windowed signal after padding with zeros')
-    parser.add_argument('--win_length', type=int, default=2048, help='each frame of audio is windowed by window of length')
-    parser.add_argument('--hop_length', type=int, default=512, help='hop length')
-    parser.add_argument('--n_mels', type=int, default=128, help='output shape of spectrogram will be (n_mels, ts)')
-
-    #mfcc
-    parser.add_argument('--n_mfcc', type=int, default=128, help='n_mfcc')
+def args_for_image(parser):
+    pass
 
 def args_for_train(parser):
     parser.add_argument('--cv_k', type=int, default=10, help='k-fold stratified cross validation')
@@ -36,6 +28,7 @@ def get_args():
 
     args_for_data(parser)
     args_for_train(parser)
+    args_for_image(parser)
     args_for_HuggingFace(parser)
 
     args = parser.parse_args()
