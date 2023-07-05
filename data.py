@@ -47,7 +47,7 @@ class ImageDataSet(Dataset):
         
         self.mask = None
         if mask is not None:
-            self.mask = [rle_decode(mask, (1024, 1024))]
+            self.mask = [rle_decode(m, (1024, 1024)) for m in mask]
 
     def __len__(self):
         return len(self.features)
