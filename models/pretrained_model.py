@@ -16,5 +16,5 @@ class HuggingFace(nn.Module):
         else:
             raise 'model unknown'
 
-    def forward(self, x):
-        return self.model(x)
+    def forward(self, **kwargs):
+        return self.model(**kwargs)
