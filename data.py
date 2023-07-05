@@ -43,14 +43,19 @@ class ImageDataSet(Dataset):
     def __init__(self, file_list, transform=None, mask=None, y=None):
         self.features = [load_image(file) for file in file_list]
         self.max_length_file = file_list.iloc[0] #need to resize this to 224 or maybe not
-        #rle_decode함수 추가 필요
+        self.transform = transform
+        
+        self.y = None
         if y is not None:
             self.y = torch.tensor(y.values, dtype=torch.long)
-        else:
-            self.y = torch.zeros(len(self.features)) #dummy y for Compatibility
+        
+        self.mask = None
+        if mask is not None:
+            self.mask = [rle_decode(mask, (1024, 1024))]
 
     def __len__(self):
         return len(self.features)
     
     def __getitem__(self, index):
-        return self.features[index], self.y[index]
+        transformed = self.transform(image=self.features[index], mask=self.mask)
+        return transformed['image'], transformed['mask'], transformed['mask'].any()
