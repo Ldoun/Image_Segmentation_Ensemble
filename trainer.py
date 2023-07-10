@@ -79,13 +79,14 @@ class Trainer():
                 x, y = x.to(self.device), y.to(self.device)
 
                 if 'labels' not in x.keys():# need to check once more 
+                    mask = mask.to(self.device)
                     output = self.model(pixel_values=x['pixel_values'], labels=mask)
                 else:
                     output = self.model(**x)
                 
                 loss = output.loss
                 total_loss += loss.item() 
-                segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*output.shape[0])
+                segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
                 correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
