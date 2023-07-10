@@ -64,7 +64,7 @@ class Trainer():
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
             segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
-            correct += batch_dice_score(segmentatation_result.detach().cpu().numpy(), mask.detach().cpu().numpy())
+            correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
         
         return total_loss/self.len_train, correct/self.len_train
     
@@ -86,7 +86,7 @@ class Trainer():
                 loss = output.loss
                 total_loss += loss.item() 
                 segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*output.shape[0])
-                correct += batch_dice_score(segmentatation_result.detach().cpu().numpy(), mask.detach().cpu().numpy())
+                correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
@@ -102,6 +102,6 @@ class Trainer():
                 x, = x.to(self.device)
                 output = self.model(pixel_values=x['pixel_values'])
                 segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
-                result.append(segmentatation_result)
+                result.extend([segmentatation_result[i].cpu().numpy() for i in range(len(segmentatation_result))])
 
         return torch.cat(result,dim=0).cpu().numpy()
