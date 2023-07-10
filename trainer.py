@@ -57,7 +57,7 @@ class Trainer():
             loss = output.loss#self.loss_fn(output, y)
             loss.backward()
             self.optimizer.step()
-            total_loss += loss.item() * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
+            total_loss += loss.item() # *x.shape[0]
             correct += dice_score(output.logit.numpy(), mask.numpy())
         
         return total_loss/self.len_train, correct/self.len_train
@@ -71,10 +71,14 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x, segmentation_maps=mask)
                 x, y = x.to(self.device), y.to(self.device)
-                output = self.model(pixel_values=x, labels=mask)
+
+                if 'labels' not in x.keys():# need to check once more 
+                    output = self.model(pixel_values=x, labels=mask)
+                else:
+                    output = self.model(**x)
                 
-                loss = self.loss_fn(output, y)
-                total_loss += loss.item() # * x.shape[0] #because reduction of criterion -> mean, increase the loss to macth the data size
+                loss = output.loss
+                total_loss += loss.item() 
                 correct += dice_score(output.logit.numpy(), mask.numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
@@ -89,7 +93,7 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x)
                 x, = x.to(self.device)
-                output = torch.softmax(self.model(pixel_values=x), dim=1) #use softmax func to describe the probability
+                output = torch.softmax(self.model(pixel_values=x).logit, dim=1) #use softmax func to describe the probability
 
                 result.append(output)
 
