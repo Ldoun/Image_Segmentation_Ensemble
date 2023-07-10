@@ -62,7 +62,7 @@ class Trainer():
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
-            correct += dice_score(output.logit.numpy(), mask.numpy())
+            correct += dice_score(output.logits.numpy(), mask.numpy())
         
         return total_loss/self.len_train, correct/self.len_train
     
@@ -83,7 +83,7 @@ class Trainer():
                 
                 loss = output.loss
                 total_loss += loss.item() 
-                correct += dice_score(output.logit.numpy(), mask.numpy())
+                correct += dice_score(output.logits.numpy(), mask.numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
@@ -97,7 +97,7 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x)
                 x, = x.to(self.device)
-                output = torch.softmax(self.model(pixel_values=x['pixel_values']).logit, dim=1) #use softmax func to describe the probability
+                output = torch.softmax(self.model(pixel_values=x['pixel_values']).logits, dim=1) #use softmax func to describe the probability
 
                 result.append(output)
 
