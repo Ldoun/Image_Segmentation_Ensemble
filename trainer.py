@@ -62,7 +62,7 @@ class Trainer():
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
-            correct += dice_score(output.logits.numpy(), mask.numpy())
+            correct += dice_score(output.logits.cpu().numpy(), mask.cpu().numpy())
         
         return total_loss/self.len_train, correct/self.len_train
     
@@ -83,7 +83,7 @@ class Trainer():
                 
                 loss = output.loss
                 total_loss += loss.item() 
-                correct += dice_score(output.logits.numpy(), mask.numpy())
+                correct += dice_score(output.logits.cpu().numpy(), mask.cpu().numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
