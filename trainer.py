@@ -52,7 +52,10 @@ class Trainer():
             x, y = x.to(self.device), y.to(self.device)
             
             self.optimizer.zero_grad()
-            output = self.model(pixel_values=x, labels=mask)
+            if 'labels' not in x.keys():# need to check once more 
+                output = self.model(pixel_values=x, labels=mask)
+            else:
+                output = self.model(**x)            
             
             loss = output.loss#self.loss_fn(output, y)
             loss.backward()
