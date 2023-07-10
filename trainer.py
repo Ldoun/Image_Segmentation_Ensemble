@@ -54,7 +54,7 @@ class Trainer():
             self.optimizer.zero_grad()
             if 'labels' not in x.keys():# need to check once more 
                 mask = mask.to(self.device)
-                output = self.model(pixel_values=x, labels=mask)
+                output = self.model(pixel_values=x['pixel_values'], labels=mask)
             else:
                 output = self.model(**x)            
             
@@ -77,7 +77,7 @@ class Trainer():
                 x, y = x.to(self.device), y.to(self.device)
 
                 if 'labels' not in x.keys():# need to check once more 
-                    output = self.model(pixel_values=x, labels=mask)
+                    output = self.model(pixel_values=x['pixel_values'], labels=mask)
                 else:
                     output = self.model(**x)
                 
@@ -97,7 +97,7 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x)
                 x, = x.to(self.device)
-                output = torch.softmax(self.model(pixel_values=x).logit, dim=1) #use softmax func to describe the probability
+                output = torch.softmax(self.model(pixel_values=x['pixel_values']).logit, dim=1) #use softmax func to describe the probability
 
                 result.append(output)
 
