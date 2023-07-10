@@ -62,7 +62,8 @@ class Trainer():
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
-            correct += dice_score(output.logits.detach().cpu().numpy(), mask.detach().cpu().numpy())
+            segmentatation_result = self.processor.post_process_semantic_segmentation(output, target_size=[224, 224]*x.shape[0])
+            correct += dice_score(segmentatation_result.detach().cpu().numpy(), mask.detach().cpu().numpy())
         
         return total_loss/self.len_train, correct/self.len_train
     
@@ -83,7 +84,8 @@ class Trainer():
                 
                 loss = output.loss
                 total_loss += loss.item() 
-                correct += dice_score(output.logits.detach().cpu().numpy(), mask.detach().cpu().numpy())
+                segmentatation_result = self.processor.post_process_semantic_segmentation(output, target_size=[224, 224]*x.shape[0])
+                correct += dice_score(segmentatation_result.detach().cpu().numpy(), mask.detach().cpu().numpy())
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
@@ -97,8 +99,8 @@ class Trainer():
                 x, mask, y = batch
                 x = self.processor(x)
                 x, = x.to(self.device)
-                output = torch.softmax(self.model(pixel_values=x['pixel_values']).logits, dim=1) #use softmax func to describe the probability
-
-                result.append(output)
+                output = self.model(pixel_values=x['pixel_values'])
+                segmentatation_result = self.processor.post_process_semantic_segmentation(output, target_size=[224, 224]*x.shape[0]) #need fix for high temperature softmax value
+                result.append(segmentatation_result)
 
         return torch.cat(result,dim=0).cpu().numpy()
