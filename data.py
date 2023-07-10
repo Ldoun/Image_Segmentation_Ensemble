@@ -28,7 +28,7 @@ def rle_decode(mask_rle, shape):
         img[lo:hi] = 1
     return img.reshape(shape)
 
-train_transform = A.Compose([
+train_transform = A.Compose([ #need to change with random crop
     # A.LongestMaxSize(max_size=1333),
     # A.RandomCrop(width=512, height=512),
     # A.HorizontalFlip(p=0.5),
@@ -54,4 +54,4 @@ class ImageDataSet(Dataset):
     
     def __getitem__(self, index):
         transformed = self.transform(image=self.features[index], mask=self.mask[index])
-        return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), torch.tensor(transformed['mask'].any(), dtype=torch.long)
+        return transformed['image'], transformed['mask'], transformed['mask'].any()
