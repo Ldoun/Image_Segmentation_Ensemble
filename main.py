@@ -41,6 +41,8 @@ if __name__ == "__main__":
 
     processor = AutoImageProcessor.from_pretrained(args.pretrained_model, do_resize=False, do_rescale=False)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
     #process image using pretrained model's AutoImageProcessor
+
+    post_processor = AutoImageProcessor.post_process_semantic_segmentation
     processor = partial(processor, return_tensors='pt') 
 
     input_size = (224, 224)
@@ -91,7 +93,7 @@ if __name__ == "__main__":
         )
 
         trainer = Trainer(
-            train_loader, valid_loader, model, loss_fn, optimizer, device, processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
+            train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
         trainer.train() #start training
 
         test_dataset = ImageDataSet(file_list=test_data['path'], mask=None, y=None)
