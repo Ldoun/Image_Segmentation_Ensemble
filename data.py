@@ -54,4 +54,4 @@ class ImageDataSet(Dataset):
     
     def __getitem__(self, index):
         transformed = self.transform(image=self.features[index], mask=self.mask[index])
-        return transformed['image'], transformed['mask'], transformed['mask'].any()
+        return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), torch.tensor(transformed['mask'].any(), dtype=torch.long)

@@ -13,7 +13,7 @@ def args_for_image(parser):
 
 def args_for_train(parser):
     parser.add_argument('--cv_k', type=int, default=10, help='k-fold stratified cross validation')
-    parser.add_argument('--num_workers', type=int, default=8, help='num_workers')
+    parser.add_argument('--num_workers', type=int, default=4, help='num_workers')
     parser.add_argument('--batch_size', type=int, default=None, help='batch_size')
     parser.add_argument('--epochs', type=int, default=10000, help='max epochs')
     parser.add_argument('--patience', type=int, default=15, help='patience for early stopping')    
