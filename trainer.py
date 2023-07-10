@@ -53,7 +53,7 @@ class Trainer():
             
             self.optimizer.zero_grad()
             if 'labels' not in x.keys():# need to check once more 
-                mask = torch.tensor(mask, dtype=torch.long, device=self.device)
+                mask = mask.to(self.device)
                 output = self.model(pixel_values=x, labels=mask)
             else:
                 output = self.model(**x)            
