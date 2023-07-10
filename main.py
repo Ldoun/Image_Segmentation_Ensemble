@@ -42,7 +42,7 @@ if __name__ == "__main__":
     processor = AutoImageProcessor.from_pretrained(args.pretrained_model, do_resize=False, do_rescale=False)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
     #process image using pretrained model's AutoImageProcessor
 
-    post_processor = AutoImageProcessor.post_process_semantic_segmentation
+    post_processor = processor.post_process_semantic_segmentation
     processor = partial(processor, return_tensors='pt') 
 
     input_size = (224, 224)
