@@ -29,18 +29,18 @@ def rle_decode(mask_rle, shape):
     return img.reshape(shape)
 
 train_transform = A.Compose([ #need to change TO random crop
-    # A.LongestMaxSize(max_size=1333),
-    # A.RandomCrop(width=512, height=512),
-    # A.HorizontalFlip(p=0.5),
-    A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
+    A.ColorJitter(p=0.5),
+    A.Flip(p=0.5),
+    A.RandomResizedCrop(height=224, width=224, ratio=(0.5, 1.5), always_apply=True),
+    #A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
 ])
 
 valid_transform = A.Compose([
-    A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
+    #A.CropNonEmptyMaskIfExists(224, 224, ignore_values=[0], ignore_channels=None, always_apply=True, p=1.0)
 ])
 
 class ImageDataSet(Dataset):
-    def __init__(self, file_list, transform=None, mask=None):
+    def __init__(self, file_list, transform=None, mask=None, label=None):
         self.features = [load_image(file) for file in file_list]
         self.max_length_file = file_list.iloc[0] #need to resize this to 224 or maybe not
         self.transform = transform
@@ -48,10 +48,15 @@ class ImageDataSet(Dataset):
         self.mask = None
         if mask is not None:
             self.mask = [rle_decode(m, (1024, 1024)) for m in mask]
+        
+        if label is not None:
+            self.label = torch.tensor(label, dtype=torch.long)
+        else:
+            self.label = torch.zeros(len(label), dtype=torch.long)
 
     def __len__(self):
         return len(self.features)
     
     def __getitem__(self, index):
         transformed = self.transform(image=self.features[index], mask=self.mask[index])
-        return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), torch.tensor(transformed['mask'].any(), dtype=torch.long)
+        return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), self.label[index]
