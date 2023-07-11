@@ -25,7 +25,6 @@ def dice_score(prediction: np.array, ground_truth: np.array, smooth=1e-7) -> flo
 def batch_dice_score(predictions, ground_truths):
     return np.mean([dice_score(predictions[i].cpu().numpy(), ground_truths[i]) for i in range(len(predictions))])
 
-
 def calculate_dice_scores(ground_truth_df, prediction_df, img_shape=(224, 224)):
     '''
     Calculate Dice scores for a dataset.
