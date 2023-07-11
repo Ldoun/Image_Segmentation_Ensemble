@@ -39,11 +39,11 @@ if __name__ == "__main__":
     test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
     #fix path based on the data dir
 
-    processor = AutoImageProcessor.from_pretrained(args.pretrained_model, do_resize=False, do_rescale=False)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
+    processor = AutoImageProcessor.from_pretrained(args.pretrained_model)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
     #process image using pretrained model's AutoImageProcessor
 
     post_processor = processor.post_process_semantic_segmentation
-    processor = partial(processor, return_tensors='pt') 
+    processor = partial(processor, return_tensors='pt', do_normalize=True, do_rescale=True, do_resize=False, do_center_crop=False) 
 
     input_size = (224, 224)
 

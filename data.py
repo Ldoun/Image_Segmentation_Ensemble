@@ -9,7 +9,7 @@ from torch.utils.data import  Dataset
 #image transformation 추가하기
 
 def load_image(file):
-    return np.array(Image.open(file))
+    return np.array(Image.open(file)).astype(np.float32)
 
 def rle_encode(mask):
     pixels = mask.flatten()
