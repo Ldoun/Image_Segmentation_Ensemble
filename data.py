@@ -47,7 +47,7 @@ class ImageDataSet(Dataset):
         
         self.mask = None
         if mask is not None:
-            self.mask = [rle_decode(m, (1024, 1024)) for m in mask]
+            self.mask = [rle_decode(m, (224, 224)) for m in mask]
         
         if label is not None:
             self.label = torch.tensor(label, dtype=torch.long)
