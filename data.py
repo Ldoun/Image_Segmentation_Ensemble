@@ -19,6 +19,9 @@ def rle_encode(mask):
     return ' '.join(str(x) for x in runs)
 
 def rle_decode(mask_rle, shape):
+    if mask_rle == np.nan:
+        return np.zeros(shape, dtype=np.uint8)
+    
     s = mask_rle.split()
     starts, lengths = [np.asarray(x, dtype=int) for x in (s[0:][::2], s[1:][::2])]
     starts -= 1

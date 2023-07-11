@@ -58,7 +58,7 @@ if __name__ == "__main__":
         test_result = prediction[output_index].values
         stackking_input = pd.read_csv(os.path.join(result_path, f'for_stacking_input.csv'))
     
-    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['img_path'], train_data['label'])): #by skf every fold will have similar label distribution
+    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['img_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
         if args.continue_train > fold+1:
             logger.info(f'skipping {fold+1}-fold')
             continue
