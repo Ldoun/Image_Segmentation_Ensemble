@@ -20,7 +20,9 @@ class Trainer():
         self.epochs = epochs
         self.logger = fold_logger
         self.best_model_path = os.path.join(result_path, 'best_model.pt')
-
+        self.len_train = len_train
+        self.len_valid = len_valid
+    
     def train(self):
         best = np.inf
         for epoch in range(1,self.epochs+1):
@@ -64,7 +66,7 @@ class Trainer():
             segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
             correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
         
-        return total_loss/len(self.train_loader), correct/len(self.train_loader)
+        return total_loss/self.len_train, correct/self.len_train
     
     def valid_step(self):
         self.model.eval()
@@ -87,7 +89,7 @@ class Trainer():
                 segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
                 correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
                 
-        return total_loss/len(self.valid_loader), correct/len(self.valid_loader)
+        return total_loss/self.len_valid, correct/self.len_valid
 
     def test(self, test_loader):
         self.model.load_state_dict(torch.load(self.best_model_path))
