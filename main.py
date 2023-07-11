@@ -73,8 +73,8 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], transform=train_transform, mask=kfold_train_data['mask_rle'].values) #label -> True if the image contains Building 
-        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], transform=valid_transform, mask=kfold_valid_data['mask_rle'].values)
+        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask']) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'])
 
         model = HuggingFace(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = nn.BCELoss() # currently not in use

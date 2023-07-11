@@ -52,7 +52,7 @@ class ImageDataSet(Dataset):
         if label is not None:
             self.label = torch.tensor(label, dtype=torch.long)
         else:
-            self.label = torch.zeros(len(label), dtype=torch.long)
+            self.label = torch.zeros(len(file_list), dtype=torch.long)
 
     def __len__(self):
         return len(self.features)
