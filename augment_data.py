@@ -46,7 +46,7 @@ if __name__ == "__main__":
     img_paths = []
     has_mask = []
 
-    for i, row in tqdm(data.iterrows()):
+    for i, row in tqdm(data.iterrows(), total=len(data)):
         mask = rle_decode(row['mask_rle'], (1024, 1024))
         image = np.array(Image.open(row['img_path']))
         
