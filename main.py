@@ -73,8 +73,8 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask']) #label -> True if the image contains Building 
-        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'])
+        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'], transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'], transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
 
         model = HuggingFace(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = nn.BCELoss() # currently not in use
@@ -96,7 +96,7 @@ if __name__ == "__main__":
             train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
         trainer.train() #start training
 
-        test_dataset = ImageDataSet(file_list=test_data['path'], mask=None, y=None)
+        test_dataset = ImageDataSet(file_list=test_data['img_path'], mask=None, label=None)
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader

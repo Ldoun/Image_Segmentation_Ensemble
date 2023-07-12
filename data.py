@@ -19,7 +19,7 @@ def rle_encode(mask):
     return ' '.join(str(x) for x in runs)
 
 def rle_decode(mask_rle, shape):
-    if mask_rle == np.nan:
+    if mask_rle==' ':
         return np.zeros(shape, dtype=np.uint8)
     
     s = mask_rle.split()
