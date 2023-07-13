@@ -33,7 +33,7 @@ if __name__ == "__main__":
     logger.info(args)
     #logger to log result of every output
 
-    train_data = pd.read_csv(args.train).iloc[:300] #이후 제거
+    train_data = pd.read_csv(args.train)
     train_data['img_path'] = train_data['img_path'].apply(lambda x: os.path.join(args.path, x))
     test_data = pd.read_csv(args.test)
     test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
