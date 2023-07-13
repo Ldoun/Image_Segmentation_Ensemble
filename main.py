@@ -46,11 +46,12 @@ if __name__ == "__main__":
     processor = partial(processor, return_tensors='pt', do_normalize=True, do_rescale=True, do_resize=False, do_center_crop=False) 
 
     input_size = (224, 224)
+    output_size = 98
 
-    test_result = np.zeros([len(test_data), input_size[0]*input_size[1]])
+    test_result = np.zeros([len(test_data), output_size])
     skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
     prediction = pd.read_csv(args.submission)
-    output_index = [f'{i}' for i in range(0, input_size[0]*input_size[1])]
+    output_index = [f'{i}' for i in range(0, output_size)]
     stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data))) #dataframe for saving OOF predictions
 
     if args.continue_train > 0:
