@@ -97,11 +97,11 @@ class Trainer():
         self.model.eval()
         with torch.no_grad():
             result = []
-            for batch in test_loader:
+            for batch in tqdm(test_loader, file=sys.stdout):
                 x = batch
                 x = self.processor(x).to(self.device)
-                output = self.model(pixel_values=x['pixel_values'])
+                output = self.model(pixel_values=x['pixel_values']).logits.detach().reshape(output.shape[0], -1).cpu().numpy()
                 #segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
                 
-                result.extend([output[i].logits.detach().cpu().numpy() for i in range(output.shape[0])])
-        return np.array(result,dim=0)
+                result.append(output)
+        return np.concatenate(result,axis=0)
