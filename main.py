@@ -100,7 +100,7 @@ if __name__ == "__main__":
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        test_result += trainer.test(test_loader).flatten() #softmax applied output; accumulate test prediction of current fold model
+        test_result += trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
         prediction[output_index] = test_result
         prediction.to_csv(os.path.join(result_path, 'sum.csv'), index=False) 
         
