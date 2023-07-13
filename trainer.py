@@ -78,7 +78,7 @@ class Trainer():
                 x, y = x.to(self.device), batch['label'].to(self.device)
 
                 if 'labels' not in x.keys():# need to check once more 
-                    mask = mask.to(self.device)
+                    mask = batch['mask'].to(self.device)
                     output = self.model(pixel_values=x['pixel_values'], labels=mask)
                 else:
                     output = self.model(**x)
