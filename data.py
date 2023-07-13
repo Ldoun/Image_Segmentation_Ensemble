@@ -44,8 +44,8 @@ valid_transform = A.Compose([
 
 class ImageDataSet(Dataset):
     def __init__(self, file_list, transform=None, mask=None, label=None):
-        self.features = [load_image(file) for file in file_list]
-        self.max_length_file = file_list.iloc[0] #need to resize this to 224 or maybe not
+        self.file_list = file_list
+        self.max_length_file = file_list[0] #need to resize this to 224 or maybe not
         self.transform = transform
         
         self.mask = None
@@ -58,8 +58,8 @@ class ImageDataSet(Dataset):
             self.label = torch.zeros(len(file_list), dtype=torch.long)
 
     def __len__(self):
-        return len(self.features)
+        return len(self.file_list)
     
     def __getitem__(self, index):
-        transformed = self.transform(image=self.features[index], mask=self.mask[index])
+        transformed = self.transform(image=load_image(self.file_list[index]), mask=self.mask[index])
         return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), self.label[index]
