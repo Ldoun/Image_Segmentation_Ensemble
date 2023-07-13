@@ -49,13 +49,12 @@ class Trainer():
         total_loss = 0
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
-            x, mask, y = batch
-            x = self.processor(x, segmentation_maps=mask)
-            x, y = x.to(self.device), y.to(self.device)
+            x = self.processor(batch['image'], segmentation_maps=batch['mask'])
+            x, y = x.to(self.device), batch['label'].to(self.device)
             
             self.optimizer.zero_grad()
             if 'labels' not in x.keys():# need to check once more 
-                mask = mask.to(self.device)
+                mask = batch['mask'].to(self.device)
                 output = self.model(pixel_values=x['pixel_values'], labels=mask)
             else:
                 output = self.model(**x)            
@@ -75,9 +74,8 @@ class Trainer():
             total_loss = 0
             correct = 0
             for batch in self.valid_loader:
-                x, mask, y = batch
-                x = self.processor(x, segmentation_maps=mask)
-                x, y = x.to(self.device), y.to(self.device)
+                x = self.processor(batch['image'], segmentation_maps=batch['mask'])
+                x, y = x.to(self.device), batch['label'].to(self.device)
 
                 if 'labels' not in x.keys():# need to check once more 
                     mask = mask.to(self.device)
@@ -98,8 +96,7 @@ class Trainer():
         with torch.no_grad():
             result = []
             for batch in tqdm(test_loader, file=sys.stdout):
-                x, mask, y = batch
-                x = self.processor(x).to(self.device)
+                x = self.processor(batch['image']).to(self.device)
                 output = self.model(pixel_values=x['pixel_values']).logits.detach().reshape(x['pixel_values'].shape[0], -1).cpu().numpy()
                 #segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
                 

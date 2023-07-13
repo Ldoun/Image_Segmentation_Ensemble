@@ -63,7 +63,9 @@ class ImageDataSet(Dataset):
     def __getitem__(self, index):
         if self.mask is None:
             transformed = self.transform(image=load_image(self.file_list[index]))
-            return torch.tensor(transformed['image'], dtype=torch.float), None, None
+            return {'image' : torch.tensor(transformed['image'], dtype=torch.float)}
         else:
             transformed = self.transform(image=load_image(self.file_list[index]), mask=self.mask[index])
-            return torch.tensor(transformed['image'], dtype=torch.float), torch.tensor(transformed['mask'], dtype=torch.long), self.label[index]
+            return {'image' : torch.tensor(transformed['image'], dtype=torch.float), 
+                    'mask' : torch.tensor(transformed['mask'], dtype=torch.long), 
+                    'label' : self.label[index]}
