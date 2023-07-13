@@ -2,6 +2,7 @@ import os
 import sys
 import torch
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 from utils import batch_dice_score
@@ -91,17 +92,19 @@ class Trainer():
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
-    def test(self, test_loader):
+    def test(self, test_loader, save_df):
         self.model.load_state_dict(torch.load(self.best_model_path))
         self.model.eval()
 
         with torch.no_grad():
-            result = []
+            last = 0
             for batch in test_loader:
                 x = batch
                 x = self.processor(x).to(self.device)
                 output = self.model(pixel_values=x['pixel_values'])
                 segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
-                result.extend([segmentatation_result[i].cpu().numpy().flatten() for i in range(len(segmentatation_result))])
 
-        return np.array(result)
+                save_df.iloc[last: last+x.shape[0]] += [segmentatation_result[i].cpu().numpy().flatten() for i in range(len(segmentatation_result))]
+                last += x.shape[0]
+
+        return save_df
