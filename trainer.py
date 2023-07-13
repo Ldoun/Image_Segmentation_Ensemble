@@ -92,19 +92,16 @@ class Trainer():
                 
         return total_loss/self.len_valid, correct/self.len_valid
 
-    def test(self, test_loader, save_df, index):
+    def test(self, test_loader):
         self.model.load_state_dict(torch.load(self.best_model_path))
         self.model.eval()
-
         with torch.no_grad():
-            last = 0
+            result = []
             for batch in test_loader:
                 x = batch
                 x = self.processor(x).to(self.device)
                 output = self.model(pixel_values=x['pixel_values'])
-                segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
-
-                save_df.iloc[index[last: last+x.shape[0]]] += [segmentatation_result[i].cpu().numpy().flatten() for i in range(len(segmentatation_result))]
-                last += x.shape[0]
-
-        return save_df
+                #segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
+                
+                result.extend([output[i].logits.detach().cpu().numpy() for i in range(output.shape[0])])
+        return np.array(result,dim=0)
