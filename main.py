@@ -33,7 +33,7 @@ if __name__ == "__main__":
     logger.info(args)
     #logger to log result of every output
 
-    train_data = pd.read_csv(args.train).iloc[:300]
+    train_data = pd.read_csv(args.train).iloc[:300] #이후 제거
     train_data['img_path'] = train_data['img_path'].apply(lambda x: os.path.join(args.path, x))
     test_data = pd.read_csv(args.test)
     test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
@@ -100,10 +100,10 @@ if __name__ == "__main__":
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        prediction = trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
+        prediction = trainer.test(test_loader, prediction, index=list(range(len(test_data)))) #softmax applied output; accumulate test prediction of current fold model
         prediction.to_csv(os.path.join(result_path, 'sum.csv'), index=False) 
         
-        stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader).flatten() #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
+        stackking_input = trainer.test(valid_loader, stackking_input, index=valid_index) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
         stackking_input.to_csv(os.path.join(result_path, f'for_stacking_input.csv'), index=False)
 
 prediction['mask_rle'] = np.array(test_result > 0.5) #use the most likely results as my final prediction
