@@ -45,13 +45,13 @@ valid_transform = A.Compose([
 class ImageDataSet(Dataset):
     def __init__(self, file_list, transform=None, mask=None, label=None):
         self.file_list = file_list
-        self.max_length_file = file_list[0] #need to resize this to 224 or maybe not
+        self.max_length_file = file_list[0]
         self.transform = transform
         
         self.mask = None
         if mask is not None:
-            self.mask = [rle_decode(m, (224, 224)) for m in mask]
-        
+            self.mask = mask
+
         if label is not None:
             self.label = torch.tensor(label, dtype=torch.long)
         else:
@@ -65,7 +65,7 @@ class ImageDataSet(Dataset):
             transformed = self.transform(image=load_image(self.file_list[index]))
             return {'image' : torch.tensor(transformed['image'], dtype=torch.float)}
         else:
-            transformed = self.transform(image=load_image(self.file_list[index]), mask=self.mask[index])
+            transformed = self.transform(image=load_image(self.file_list[index]), mask=rle_decode(self.mask[index], (224, 224)))
             return {'image' : torch.tensor(transformed['image'], dtype=torch.float), 
                     'mask' : torch.tensor(transformed['mask'], dtype=torch.long), 
                     'label' : self.label[index]}
