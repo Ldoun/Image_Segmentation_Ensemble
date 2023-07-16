@@ -76,6 +76,7 @@ class Trainer():
             correct = 0
             for batch in self.valid_loader:
                 x = self.processor(batch['image'], segmentation_maps=batch['mask'])
+                mask = batch['mask']
                 x, y = x.to(self.device), batch['label'].to(self.device)
 
                 if 'labels' not in x.keys():# need to check once more 
