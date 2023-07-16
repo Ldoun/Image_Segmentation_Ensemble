@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from functools import partial
 from sklearn.model_selection import StratifiedKFold, KFold
+from types import SimpleNamespace
 
 import torch
 from torch import optim, nn
@@ -12,7 +13,7 @@ from torch.utils.data import DataLoader
 from config import get_args
 from trainer import Trainer
 from models import HuggingFace, AutoImageProcessor
-from utils import seed_everything
+from utils import seed_everything, rle_encode
 from data import ImageDataSet, load_image, train_transform, valid_transform
 from auto_batch_size import max_gpu_batch_size
 
@@ -50,8 +51,8 @@ if __name__ == "__main__":
 
     test_result = np.zeros([len(test_data), output_size])
     skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
-    prediction = pd.read_csv(args.submission)
     output_index = [f'{i}' for i in range(0, output_size)]
+    prediction = pd.DataFrame(columns = output_index, index=range(len(test_data)))
     stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data))) #dataframe for saving OOF predictions
 
     if args.continue_train > 0:
@@ -108,5 +109,14 @@ if __name__ == "__main__":
         stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
         stackking_input.to_csv(os.path.join(result_path, f'for_stacking_input.csv'), index=False)
 
-prediction['mask_rle'] = np.array(test_result > 0.5) #use the most likely results as my final prediction
-prediction.drop(columns=output_index).to_csv(os.path.join(result_path, 'prediction.csv'), index=False)
+result_array = []
+for row in prediction.iterrows():
+    post_result = post_processor(SimpleNamespace(logits=row[output_index].values), target_sizes=[[224, 224]])
+    if (post_result!=0).any():
+        result_array.append(rle_encode(post_result))
+    else:
+        result_array.append(-1)
+    
+result_df = pd.read_csv(args.submission)
+result_df['mask_rle'] = result_array
+result_df.to_csv(os.path.join(result_path, 'final_prediction.csv'), index=False)
