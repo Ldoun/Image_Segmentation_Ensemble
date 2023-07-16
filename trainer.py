@@ -50,11 +50,12 @@ class Trainer():
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
             x = self.processor(batch['image'], segmentation_maps=batch['mask'])
+            mask = batch['mask']
             x, y = x.to(self.device), batch['label'].to(self.device)
             
             self.optimizer.zero_grad()
             if 'labels' not in x.keys():# need to check once more 
-                mask = batch['mask'].to(self.device)
+                mask = mask.to(self.device)
                 output = self.model(pixel_values=x['pixel_values'], labels=mask)
             else:
                 output = self.model(**x)            

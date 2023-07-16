@@ -10,7 +10,7 @@ class HuggingFace(nn.Module):
         elif args.model_type == 'instance':
             self.model = AutoModelForInstanceSegmentation.from_pretrained(args.pretrained_model) #instance Segmentation: R channel classify caegory, G channel classify instance
         elif args.model_type == 'semantic':
-            self.model = AutoModelForSemanticSegmentation.from_pretrained(args.pretrained_model, id2label=id2label, label2id=label2id) #ignore_mismatched_sizes=True
+            self.model = AutoModelForSemanticSegmentation.from_pretrained(args.pretrained_model, id2label=id2label, label2id=label2id, ignore_mismatched_sizes=True) #ignore_mismatched_sizes=True
         elif args.model_type == 'universal':
             self.model = AutoModelForUniversalSegmentation.from_pretrained(args.pretrained_model)
         else:
