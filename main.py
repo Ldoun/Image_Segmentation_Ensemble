@@ -12,8 +12,9 @@ from torch.utils.data import DataLoader
 
 from config import get_args
 from trainer import Trainer
-from models import HuggingFace, AutoImageProcessor
+from dice_loss import dice_loss
 from utils import seed_everything, rle_encode
+from models import HuggingFace, AutoImageProcessor
 from data import ImageDataSet, load_image, train_transform, valid_transform
 from auto_batch_size import max_gpu_batch_size
 
@@ -35,9 +36,9 @@ if __name__ == "__main__":
     #logger to log result of every output
 
     train_data = pd.read_csv(args.train)
-    train_data['img_path'] = train_data['img_path'].apply(lambda x: os.path.join(args.path, x))
+    train_data['np_path'] = train_data['np_path'].apply(lambda x: os.path.join(args.path, x))
     test_data = pd.read_csv(args.test)
-    test_data['img_path'] = test_data['img_path'].apply(lambda x: os.path.join(args.path, x))
+    test_data['np_path'] = test_data['np_path'].apply(lambda x: os.path.join(args.path, x))
     #fix path based on the data dir
 
     processor = AutoImageProcessor.from_pretrained(args.pretrained_model)#normalization은 유지 #, reduce_labels=True) #reduce_label remove background class
@@ -60,7 +61,7 @@ if __name__ == "__main__":
         test_result = prediction[output_index].values
         stackking_input = pd.read_csv(os.path.join(result_path, f'for_stacking_input.csv'))
     
-    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['img_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
+    for fold, (train_index, valid_index) in enumerate(skf.split(train_data['np_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
         if args.continue_train > fold+1:
             logger.info(f'skipping {fold+1}-fold')
             continue
@@ -75,16 +76,16 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = ImageDataSet(file_list=kfold_train_data['img_path'].values, transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values) #label -> True if the image contains Building 
-        valid_dataset = ImageDataSet(file_list=kfold_valid_data['img_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
+        train_dataset = ImageDataSet(file_list=kfold_train_data['np_path'].values, transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['np_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
 
-        model = HuggingFace(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
-        loss_fn = nn.BCELoss() # currently not in use
+        model = HuggingFace(args, {1:'Pos'}, {'Pos':1}).to(device) #make model based on the model name and args
+        loss_fn = dice_loss if args.dice_loss == 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
             args.batch_size = max_gpu_batch_size(device, load_image, logger, model, loss_fn, train_dataset.max_length_file)
-            model = HuggingFace(args, {0:'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device)
+            model = HuggingFace(args, {1:'Pos'}, {'Pos':1}).to(device)
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         train_loader = DataLoader(
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
         trainer.train() #start training
 
-        test_dataset = ImageDataSet(file_list=test_data['img_path'].values, transform=valid_transform, mask=None, label=None)
+        test_dataset = ImageDataSet(file_list=test_data['np_path'].values, transform=valid_transform, mask=None, label=None)
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
