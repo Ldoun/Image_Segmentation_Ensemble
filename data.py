@@ -11,6 +11,9 @@ from torch.utils.data import  Dataset
 def load_image(file):
     return np.array(Image.open(file)).astype(np.float32)
 
+def load_image_array(file):
+    return np.load(file).astype(np.float32)
+
 def rle_encode(mask):
     pixels = mask.flatten()
     pixels = np.concatenate([[0], pixels, [0]])
@@ -62,10 +65,10 @@ class ImageDataSet(Dataset):
     
     def __getitem__(self, index):
         if self.mask is None:
-            transformed = self.transform(image=load_image(self.file_list[index]))
+            transformed = self.transform(image=load_image_array(self.file_list[index]))
             return {'image' : torch.tensor(transformed['image'], dtype=torch.float)}
         else:
-            transformed = self.transform(image=load_image(self.file_list[index]), mask=self.mask[index])
+            transformed = self.transform(image=load_image_array(self.file_list[index]), mask=self.mask[index])
             return {'image' : torch.tensor(transformed['image'], dtype=torch.float), 
                     'mask' : torch.tensor(transformed['mask'], dtype=torch.long), 
                     'label' : self.label[index]}
