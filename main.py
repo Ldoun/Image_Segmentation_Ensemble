@@ -76,8 +76,8 @@ if __name__ == "__main__":
         kfold_train_data = train_data.iloc[train_index]
         kfold_valid_data = train_data.iloc[valid_index]
 
-        train_dataset = ImageDataSet(file_list=kfold_train_data['np_path'].values, transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values, device=device) #label -> True if the image contains Building 
-        valid_dataset = ImageDataSet(file_list=kfold_valid_data['np_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values, device=device)
+        train_dataset = ImageDataSet(file_list=kfold_train_data['np_path'].values, transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values) #label -> True if the image contains Building 
+        valid_dataset = ImageDataSet(file_list=kfold_valid_data['np_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
 
         model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = dice_loss if args.dice_loss == 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
         test_dataset = ImageDataSet(file_list=test_data['np_path'].values, transform=valid_transform, mask=None, label=None)
         test_loader = DataLoader(
-            test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, device=device
+            test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
         test_result += trainer.test(test_loader)
         prediction[output_index] = test_result #softmax applied output; accumulate test prediction of current fold model

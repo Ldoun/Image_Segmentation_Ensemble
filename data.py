@@ -46,21 +46,20 @@ valid_transform = A.Compose([
 ])
 
 class ImageDataSet(Dataset):
-    def __init__(self, file_list, transform=None, mask=None, label=None, device='cpu'):
+    def __init__(self, file_list, transform=None, mask=None, label=None):
         self.file_list = file_list
         self.max_length_file = file_list[0] #need to resize this to 224 or maybe not
         self.transform = transform
-        self.device = device
         
         self.mask = None
         if mask is not None:
             self.mask = [rle_decode(m, (224, 224)) for m in mask]
         
         if label is not None:
-            self.label = label
+            self.label = torch.tensor(label, dtype=torch.long)
             self.label_func = lambda index: self.label[index]
         else:
-            self.label_func = lambda index: 0
+            self.label_func = lambda index: torch.tensor(0, dtype=torch.long)
 
     def __len__(self):
         return len(self.file_list)
@@ -68,9 +67,9 @@ class ImageDataSet(Dataset):
     def __getitem__(self, index):
         if self.mask is None:
             transformed = self.transform(image=load_image_array(self.file_list[index]))
-            return {'image' : torch.tensor(transformed['image'], dtype=torch.float, device=self.device)}
+            return {'image' : torch.tensor(transformed['image'], dtype=torch.float)}
         else:
             transformed = self.transform(image=load_image_array(self.file_list[index]), mask=self.mask[index])
-            return {'image' : torch.tensor(transformed['image'], dtype=torch.float, device=self.device), 
-                    'mask' : torch.tensor(transformed['mask'], dtype=torch.long, device=self.device), 
-                    'label' : torch.tensor(self.label_func(index), dtype=torch.long, device=self.device)}
+            return {'image' : torch.tensor(transformed['image'], dtype=torch.float), 
+                    'mask' : torch.tensor(transformed['mask'], dtype=torch.long), 
+                    'label' : self.label_func(index)}
