@@ -8,7 +8,7 @@ from tqdm import tqdm
 from utils import batch_dice_score
 
 class Trainer():
-    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, patience, epochs, result_path, fold_logger, len_train, len_valid):
+    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, patience, epochs, result_path, fold_logger, len_train, len_valid, dice_loss_ratio):
         self.train_loader = train_loader
         self.valid_loader = valid_loader
         self.model = model
@@ -23,6 +23,7 @@ class Trainer():
         self.best_model_path = os.path.join(result_path, 'best_model.pt')
         self.len_train = len_train
         self.len_valid = len_valid
+        self.dice_loss_ratio = dice_loss_ratio
     
     def train(self):
         best = np.inf
@@ -50,17 +51,19 @@ class Trainer():
         correct = 0
         for batch in tqdm(self.train_loader, file=sys.stdout): #tqdm output will not be written to logger file(will only written to stdout)
             x = self.processor(batch['image'], segmentation_maps=batch['mask'])
-            mask = batch['mask']
+            mask = batch['mask'].to(self.device)
             x, y = x.to(self.device), batch['label'].to(self.device)
-            
+
             self.optimizer.zero_grad()
             if 'labels' not in x.keys():# need to check once more 
-                mask = mask.to(self.device)
-                output = self.model(pixel_values=x['pixel_values'], labels=mask)
+                output = self.model(pixel_values=x['pixel_values'], labels=mask if self.dice_loss_ratio < 1.0 else None)
             else:
-                output = self.model(**x)            
-            
-            loss = output.loss#self.loss_fn(output, y)
+                output = self.model(pixel_values=x['pixel_values'], labels=x['labels'] if self.dice_loss_ratio < 1.0 else None)            
+
+            if self.dice_loss_ratio < 1.0:
+                loss = ((1-self.dice_loss_ratio) * output.loss) + (self.dice_loss_ratio * self.loss_fn(output.logits.squeeze(1), mask))
+            else:
+                loss = self.loss_fn(output.logits.squeeze(1), mask)
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
