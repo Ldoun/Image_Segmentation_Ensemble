@@ -79,13 +79,13 @@ if __name__ == "__main__":
         train_dataset = ImageDataSet(file_list=kfold_train_data['np_path'].values, transform=train_transform, mask=kfold_train_data['mask_rle'].values, label=kfold_train_data['has_mask'].values) #label -> True if the image contains Building 
         valid_dataset = ImageDataSet(file_list=kfold_valid_data['np_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
 
-        model = HuggingFace(args, {1:'Pos'}, {'Pos':1}).to(device) #make model based on the model name and args
+        model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = dice_loss if args.dice_loss == 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
             args.batch_size = max_gpu_batch_size(device, load_image, logger, model, loss_fn, train_dataset.max_length_file)
-            model = HuggingFace(args, {1:'Pos'}, {'Pos':1}).to(device)
+            model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device)
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         train_loader = DataLoader(
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         )
 
         trainer = Trainer(
-            train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset))
+            train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, args.patience, args.epochs, fold_result_path, fold_logger, len(train_dataset), len(valid_dataset), args.dice_loss)
         trainer.train() #start training
 
         test_dataset = ImageDataSet(file_list=test_data['np_path'].values, transform=valid_transform, mask=None, label=None)

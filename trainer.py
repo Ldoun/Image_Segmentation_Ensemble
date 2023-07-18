@@ -61,9 +61,9 @@ class Trainer():
                 output = self.model(pixel_values=x['pixel_values'], labels=x['labels'] if self.dice_loss_ratio < 1.0 else None)            
 
             if self.dice_loss_ratio < 1.0:
-                loss = ((1-self.dice_loss_ratio) * output.loss) + (self.dice_loss_ratio * self.loss_fn(output.logits.squeeze(1), mask))
+                loss = ((1-self.dice_loss_ratio) * output.loss) + (self.dice_loss_ratio * self.loss_fn(output.logits[:, 1, :, :], mask))
             else:
-                loss = self.loss_fn(output.logits.squeeze(1), mask)
+                loss = self.loss_fn(output[:, 1, :, :], mask)
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item() # *x.shape[0]
