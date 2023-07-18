@@ -80,7 +80,7 @@ if __name__ == "__main__":
         valid_dataset = ImageDataSet(file_list=kfold_valid_data['np_path'].values, transform=valid_transform, mask=kfold_valid_data['mask_rle'].values, label=kfold_valid_data['has_mask'].values)
 
         model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
-        loss_fn = dice_loss if args.dice_loss == 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
+        loss_fn = dice_loss if args.dice_loss > 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
