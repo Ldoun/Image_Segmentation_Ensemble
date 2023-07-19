@@ -56,8 +56,8 @@ if __name__ == "__main__":
     stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data)), dtype=np.float16) #dataframe for saving OOF predictions
 
     if args.continue_train > 0:
-        prediction = pd.read_csv(os.path.join(result_path, 'sum.csv'))
-        stackking_input = pd.read_csv(os.path.join(result_path, f'for_stacking_input.csv'))
+        prediction = pd.read_hdf(os.path.join(result_path, 'train.hdf'), 'prediction')
+        stackking_input = pd.read_hdf(os.path.join(result_path, f'train.hdf'), 'stacking')
     
     for fold, (train_index, valid_index) in enumerate(skf.split(train_data['np_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
         if args.continue_train > fold+1:
@@ -102,10 +102,10 @@ if __name__ == "__main__":
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
         prediction[output_index] += trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
-        prediction.to_csv(os.path.join(result_path, 'sum.csv'), index=False) 
+        prediction.to_hdf(os.path.join(result_path, 'train.hdf'), index=False, key='prediction') 
         
         stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
-        stackking_input.to_csv(os.path.join(result_path, f'for_stacking_input.csv'), index=False)
+        stackking_input.to_hdf(os.path.join(result_path, f'train.hdf'), index=False, key='stacking')
 
 result_array = []
 for row in prediction.iterrows():
