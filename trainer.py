@@ -66,7 +66,7 @@ class Trainer():
                 loss = self.loss_fn(output.logits[:, 1, :, :], mask)
             loss.backward()
             self.optimizer.step()
-            total_loss += loss.item() # *x.shape[0]
+            total_loss += loss.item() * x['pixel_values'].shape[0]
             segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
             correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
         
@@ -89,7 +89,7 @@ class Trainer():
                     output = self.model(**x)
                 
                 loss = output.loss
-                total_loss += loss.item() 
+                total_loss += loss.item() * x['pixel_values'].shape[0]
                 segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
                 correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
                 
