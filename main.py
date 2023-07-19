@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
     output_index = [f'{i}' for i in range(0, output_size)]
-    prediction = pd.DataFrame(columns = output_index, index=range(len(test_data)))
-    stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data))) #dataframe for saving OOF predictions
+    prediction = pd.DataFrame(columns = output_index, index=range(len(test_data)), dtype=np.float16)
+    stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data)), dtype=np.float16) #dataframe for saving OOF predictions
 
     if args.continue_train > 0:
         prediction = pd.read_csv(os.path.join(result_path, 'sum.csv'))
