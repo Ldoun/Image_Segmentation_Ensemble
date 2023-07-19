@@ -102,7 +102,7 @@ class Trainer():
             result = []
             for batch in tqdm(test_loader, file=sys.stdout):
                 x = self.processor(batch['image']).to(self.device)
-                output = self.model(pixel_values=x['pixel_values']).logits.detach().reshape(x['pixel_values'].shape[0], -1).cpu().numpy()
+                output = self.model(pixel_values=x['pixel_values']).logits.softmax(1)[:, 1, :, :].detach().reshape(x['pixel_values'].shape[0], -1).cpu().numpy()
                 #segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0]) #need fix for high temperature softmax value
                 
                 result.append(output)
