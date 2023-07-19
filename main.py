@@ -50,7 +50,6 @@ if __name__ == "__main__":
     input_size = (224, 224)
     output_size = 224*224
 
-    test_result = np.zeros([len(test_data), output_size])
     skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
     output_index = [f'{i}' for i in range(0, output_size)]
     prediction = pd.DataFrame(columns = output_index, index=range(len(test_data)))
@@ -58,7 +57,6 @@ if __name__ == "__main__":
 
     if args.continue_train > 0:
         prediction = pd.read_csv(os.path.join(result_path, 'sum.csv'))
-        test_result = prediction[output_index].values
         stackking_input = pd.read_csv(os.path.join(result_path, f'for_stacking_input.csv'))
     
     for fold, (train_index, valid_index) in enumerate(skf.split(train_data['np_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
@@ -103,8 +101,7 @@ if __name__ == "__main__":
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        test_result += trainer.test(test_loader)
-        prediction[output_index] = test_result #softmax applied output; accumulate test prediction of current fold model
+        prediction[output_index] += trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
         prediction.to_csv(os.path.join(result_path, 'sum.csv'), index=False) 
         
         stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
