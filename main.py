@@ -50,15 +50,7 @@ if __name__ == "__main__":
     input_size = (224, 224)
     output_size = 224*224
 
-    skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation
-    output_index = [f'{i}' for i in range(0, output_size)]
-    prediction = pd.DataFrame(columns = output_index, index=range(len(test_data)), dtype=np.float16)
-    stackking_input = pd.DataFrame(columns = output_index, index=range(len(train_data)), dtype=np.float16) #dataframe for saving OOF predictions
-
-    if args.continue_train > 0:
-        prediction = pd.read_hdf(os.path.join(result_path, 'train.hdf'), 'prediction')
-        stackking_input = pd.read_hdf(os.path.join(result_path, f'train.hdf'), 'stacking')
-    
+    skf = StratifiedKFold(n_splits=args.cv_k, random_state=args.seed, shuffle=True) #Using StratifiedKFold for cross-validation    
     for fold, (train_index, valid_index) in enumerate(skf.split(train_data['np_path'], train_data['has_mask'])): #by skf every fold will have similar label distribution
         if args.continue_train > fold+1:
             logger.info(f'skipping {fold+1}-fold')
@@ -101,20 +93,6 @@ if __name__ == "__main__":
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        prediction[output_index] += trainer.test(test_loader) #softmax applied output; accumulate test prediction of current fold model
-        prediction.to_hdf(os.path.join(result_path, 'train.hdf'), index=False, key='prediction') 
-        
-        stackking_input.loc[valid_index, output_index] = trainer.test(valid_loader) #use the validation data(hold out dataset) to make input for Stacking Ensemble model(out of fold prediction)
-        stackking_input.to_hdf(os.path.join(result_path, f'train.hdf'), index=False, key='stacking')
-
-result_array = []
-for row in prediction.iterrows():
-    post_result = post_processor(SimpleNamespace(logits=row[output_index].values), target_sizes=[[224, 224]])
-    if (post_result!=0).any():
-        result_array.append(rle_encode(post_result))
-    else:
-        result_array.append(-1)
-    
-result_df = pd.read_csv(args.submission)
-result_df['mask_rle'] = result_array
-result_df.to_csv(os.path.join(result_path, 'final_prediction.csv'), index=False)
+        np.savez_compressed(os.path.join(result_path, 'test_prediction'), trainer.test(test_loader)) #softmax applied output; accumulate test prediction of current fold model
+        np.savez_compressed(os.path.join(result_path, 'valid_prediction'), trainer.test(valid_loader))
+        np.save(os.path.join(result_path, 'valid_index', valid_index))
