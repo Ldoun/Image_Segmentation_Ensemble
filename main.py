@@ -93,6 +93,6 @@ if __name__ == "__main__":
         test_loader = DataLoader(
             test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers
         ) #make test data loader
-        np.savez_compressed(os.path.join(result_path, 'test_prediction'), trainer.test(test_loader)) #softmax applied output; accumulate test prediction of current fold model
-        np.savez_compressed(os.path.join(result_path, 'valid_prediction'), trainer.test(valid_loader))
-        np.save(os.path.join(result_path, 'valid_index', valid_index))
+        np.savez_compressed(os.path.join(fold_result_path, 'test_prediction'), trainer.test(test_loader)) #softmax applied output; accumulate test prediction of current fold model
+        np.savez_compressed(os.path.join(fold_result_path, 'valid_prediction'), trainer.test(valid_loader))
+        np.savez(os.path.join(fold_result_path, 'valid_index'), valid_index)
