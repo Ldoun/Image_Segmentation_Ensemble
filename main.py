@@ -75,15 +75,14 @@ if __name__ == "__main__":
         loss_fn = dice_loss if args.dice_loss > 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
         scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
-        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=7, after_scheduler=scheduler)
+        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=3, after_scheduler=scheduler)
 
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
             args.batch_size = max_gpu_batch_size(device, load_image, logger, model, loss_fn, train_dataset.max_length_file)
             model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device)
             optimizer = optim.Adam(model.parameters(), lr=args.lr)
-            scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
-            scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=7, after_scheduler=scheduler)
+            scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=args.warmup_epochs, after_scheduler=None)
 
         train_loader = DataLoader(
             train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.num_workers, pin_memory=True
