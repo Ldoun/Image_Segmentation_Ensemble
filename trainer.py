@@ -29,7 +29,6 @@ class Trainer():
     def train(self):
         best = np.inf
         for epoch in range(1,self.epochs+1):
-            self.scheduler.step(epoch)
             loss_train, score_train = self.train_step()
             loss_val, score_val = self.valid_step()
 
@@ -68,6 +67,7 @@ class Trainer():
                 loss = self.loss_fn(output.logits.softmax(1)[:, 1, :, :], mask)
             loss.backward()
             self.optimizer.step()
+            self.scheduler.step()
             total_loss += loss.item() * x['pixel_values'].shape[0]
             segmentatation_result = self.post_processor(output, target_sizes=[[224, 224]]*x['pixel_values'].shape[0])
             correct += batch_dice_score(segmentatation_result, mask.detach().cpu().numpy())
