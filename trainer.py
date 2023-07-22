@@ -8,12 +8,13 @@ from tqdm import tqdm
 from utils import batch_dice_score
 
 class Trainer():
-    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, device, processor, post_processor, patience, epochs, result_path, fold_logger, len_train, len_valid, dice_loss_ratio):
+    def __init__(self, train_loader, valid_loader, model, loss_fn, optimizer, scheduler, device, processor, post_processor, patience, epochs, result_path, fold_logger, len_train, len_valid, dice_loss_ratio):
         self.train_loader = train_loader
         self.valid_loader = valid_loader
         self.model = model
         self.loss_fn = loss_fn
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = device
         self.processor = processor
         self.post_processor = post_processor
@@ -28,6 +29,7 @@ class Trainer():
     def train(self):
         best = np.inf
         for epoch in range(1,self.epochs+1):
+            self.scheduler.step(epoch)
             loss_train, score_train = self.train_step()
             loss_val, score_val = self.valid_step()
 
