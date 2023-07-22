@@ -74,8 +74,7 @@ if __name__ == "__main__":
         model = HuggingFace(args, {0: 'Neg', 1:'Pos'}, {'Neg':0, 'Pos':1}).to(device) #make model based on the model name and args
         loss_fn = dice_loss if args.dice_loss > 0.0 else lambda *x, **y: 0 #args.dice_loss = 0 -> not using dice loss for it
         optimizer = optim.Adam(model.parameters(), lr=args.lr)
-        scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
-        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=3, after_scheduler=scheduler)
+        scheduler_warmup = GradualWarmupScheduler(optimizer, multiplier=1, total_epoch=args.warmup_epochs, after_scheduler=None)
 
 
         if args.batch_size == None: #if batch size is not defined -> calculate the appropriate batch size
