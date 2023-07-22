@@ -16,7 +16,7 @@ def args_for_train(parser):
     parser.add_argument('--num_workers', type=int, default=4, help='num_workers')
     parser.add_argument('--batch_size', type=int, default=None, help='batch_size')
     parser.add_argument('--epochs', type=int, default=100, help='max epochs')
-    parser.add_argument('--patience', type=int, default=15, help='patience for early stopping')    
+    parser.add_argument('--patience', type=int, default=7, help='patience for early stopping')    
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate for the optimizer')
     parser.add_argument('--dice_loss', type=float, default=0.0, help='ratio of dice loss in total loss')
 
